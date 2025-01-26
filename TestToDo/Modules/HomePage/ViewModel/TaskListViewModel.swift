@@ -19,18 +19,18 @@ class TaskListViewModel: ObservableObject {
     @Published var isTaskSaved: Bool = false
     
     private let apiViewModel: APIViewModel
+    private let persistenceController: PersistenceController
 
-    private let context = PersistenceController.shared.container.viewContext
-
-    init(apiViewModel: APIViewModel) {
+    init(apiViewModel: APIViewModel, persistenceController: PersistenceController) {
         self.apiViewModel = apiViewModel
+        self.persistenceController = persistenceController
         fetchTasks()
     }
     
     // MARK: - Methods
     func fetchTasks() {
         DispatchQueue.global(qos: .background).async {
-            let fetchedTasks = PersistenceController.shared.fetchTasks()
+            let fetchedTasks = self.persistenceController.fetchTasks()
             DispatchQueue.main.async {
                 print("Fetched tasks: \(fetchedTasks.count)")
                 self.tasks = fetchedTasks
@@ -40,7 +40,7 @@ class TaskListViewModel: ObservableObject {
     }
     
     func saveTasksToCoreData(from apiTasks: [APIModel]) {
-        let context = PersistenceController.shared.container.viewContext
+        let context = self.persistenceController.container.viewContext
 
         DispatchQueue.global(qos: .background).async {
             for task in apiTasks {
@@ -88,7 +88,7 @@ class TaskListViewModel: ObservableObject {
 
     func updateIsChecked(for task: TaskItem, to newValue: Bool) {
         task.isChecked = newValue
-        PersistenceController.shared.saveContext()
+        persistenceController.saveContext()
         filterTasks()
     }
     
@@ -110,7 +110,7 @@ class TaskListViewModel: ObservableObject {
     }
     
     func deleteTask(_ task: TaskItem) {
-        let context = PersistenceController.shared.container.viewContext
+        let context = persistenceController.container.viewContext
         withAnimation {
             context.delete(task)
             do {
@@ -135,4 +135,3 @@ class TaskListViewModel: ObservableObject {
         print("Selected Task for Editing: \(task.id)")
     }
 }
-

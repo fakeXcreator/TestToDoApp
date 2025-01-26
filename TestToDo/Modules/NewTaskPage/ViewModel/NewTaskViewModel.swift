@@ -13,12 +13,14 @@ final class NewTaskViewModel: ObservableObject {
     private(set) var date: Date
 
     var task: TaskItem?
-    
-    init(task: TaskItem? = nil) {
+    private let persistenceController: PersistenceController
+
+    init(task: TaskItem? = nil, persistenceController: PersistenceController) {
         self.task = task
         self.title = task?.name ?? ""
         self.description = task?.desc ?? ""
         self.date = task?.date ?? Date()
+        self.persistenceController = persistenceController
     }
     
     // MARK: - Methods
@@ -32,8 +34,8 @@ final class NewTaskViewModel: ObservableObject {
             return
         }
         
-        let context = PersistenceController.shared.container.viewContext
-        
+        let context = persistenceController.container.viewContext
+
         if let task = self.task {
             task.name = self.title
             task.desc = self.description

@@ -9,11 +9,11 @@ import SwiftUI
 
 @main
 struct TestToDoApp: App {
-    let persistenceController = PersistenceController.shared
+    let persistenceController = PersistenceController()
 
     var body: some Scene {
         WindowGroup {
-            TaskListView(viewModel: TaskListViewModel(apiViewModel: APIViewModel()))
+            TaskListView(viewModel: TaskListViewModel(apiViewModel: APIViewModel(), persistenceController: persistenceController), persistenceController: persistenceController)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .preferredColorScheme(.dark)
         }

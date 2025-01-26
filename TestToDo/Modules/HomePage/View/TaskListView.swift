@@ -1,4 +1,3 @@
-//
 //  TaskListView.swift
 //  TestToDo
 //
@@ -8,83 +7,28 @@
 import SwiftUI
 
 struct TaskListView: View {
-    // MARK: - Properties
     @StateObject private var viewModel: TaskListViewModel
     @State private var isTaskSaved: Bool = false
-
-    init(viewModel: TaskListViewModel) {
+    private let persistenceController: PersistenceController
+    
+    init(viewModel: TaskListViewModel, persistenceController: PersistenceController) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.persistenceController = persistenceController
     }
 
-    // MARK: - View
     var body: some View {
         NavigationView {
             ZStack {
-                VStack {
-                    search
-                    list
-                    footer
-                }
-                .navigationTitle("Задачи")
-                .blur(radius: viewModel.isLongPressed ? 5 : 0)
-                .disabled(viewModel.isLongPressed)
-
-                // MARK: - onLongPressGesture
-                if let task = viewModel.selectedTask, viewModel.isLongPressed {
-                    ZStack {
-                        Color.black.opacity(0.4)
-                            .ignoresSafeArea()
-                            .onTapGesture {
-                                viewModel.closeSelectedTask()
-                            }
-
-                        VStack(spacing: 16) {
-                            TaskCellView(
-                                isChecked: .constant(false),
-                                viewModel: NewTaskViewModel(task: task),
-                                taskListViewModel: viewModel,
-                                showCheckBox: !(task == viewModel.selectedTask && viewModel.isLongPressed)
-                            )
-                            .padding()
-                            .background(Color("TestGray"))
-                            .cornerRadius(10)
-                            .shadow(radius: 10)
-                            .scaleEffect(1.1)
-                            .padding(.horizontal, 20)
-
-                            AdditionalButtonsView(viewModel: viewModel, task: task)
-                                .zIndex(1)
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    .zIndex(1)
-                }
-
-                // MARK: - Edit Task View
-                if let task = viewModel.selectedTask {
-                    NavigationLink(
-                        destination: NewTaskView(viewModel: NewTaskViewModel(task: task), taskListViewModel: viewModel, isTaskSaved: $isTaskSaved),
-                        isActive: Binding(
-                            get: {
-                                return viewModel.isEditingTask
-                            },
-                            set: { newValue in
-                                if !newValue {
-                                    viewModel.closeSelectedTask()
-                                }
-                            }
-                        )
-                    ) {
-                        EmptyView()
-                    }
-                }
+                content
+                longPressOverlay
+                editTaskView
             }
         }
         .tint(Color("TestYellow"))
         .onChange(of: isTaskSaved) { _ in
             if isTaskSaved {
                 viewModel.fetchTasks()
-                isTaskSaved = false  
+                isTaskSaved = false
             }
         }
     }
@@ -92,6 +36,17 @@ struct TaskListView: View {
 
 // MARK: - UI Components
 private extension TaskListView {
+    var content: some View {
+        VStack {
+            search
+            list
+            footer
+        }
+        .navigationTitle("Задачи")
+        .blur(radius: viewModel.isLongPressed ? 5 : 0)
+        .disabled(viewModel.isLongPressed)
+    }
+
     var search: some View {
         SearchField(text: $viewModel.searchText)
             .padding(.top, 8)
@@ -107,7 +62,7 @@ private extension TaskListView {
                 ForEach($viewModel.filteredTasks, id: \.self) { $task in
                     TaskCellView(
                         isChecked: viewModel.createIsCheckedBinding(for: task),
-                        viewModel: NewTaskViewModel(task: task),
+                        viewModel: NewTaskViewModel(task: task, persistenceController: persistenceController),
                         taskListViewModel: viewModel
                     )
                     .onLongPressGesture {
@@ -130,6 +85,68 @@ private extension TaskListView {
     }
 
     var footer: some View {
-        FooterView(taskListViewModel: viewModel)
+        FooterView(taskListViewModel: viewModel, persistenceController: persistenceController)
+    }
+
+    var longPressOverlay: some View {
+        if let task = viewModel.selectedTask, viewModel.isLongPressed {
+            return AnyView(
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            viewModel.closeSelectedTask()
+                        }
+
+                    VStack(spacing: 16) {
+                        TaskCellView(
+                            isChecked: .constant(false),
+                            viewModel: NewTaskViewModel(task: task, persistenceController: persistenceController),
+                            taskListViewModel: viewModel,
+                            showCheckBox: !(task == viewModel.selectedTask && viewModel.isLongPressed)
+                        )
+                        .padding()
+                        .background(Color("TestGray"))
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
+                        .scaleEffect(1.1)
+                        .padding(.horizontal, 20)
+
+                        AdditionalButtonsView(viewModel: viewModel, task: task)
+                            .zIndex(1)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                .zIndex(1)
+            )
+        } else {
+            return AnyView(EmptyView())
+        }
+    }
+
+    var editTaskView: some View {
+        if let task = viewModel.selectedTask {
+            return AnyView(
+                NavigationLink(
+                    destination: NewTaskView(
+                        viewModel: NewTaskViewModel(task: task, persistenceController: persistenceController),
+                        taskListViewModel: viewModel,
+                        isTaskSaved: $isTaskSaved
+                    ),
+                    isActive: Binding(
+                        get: { viewModel.isEditingTask },
+                        set: { newValue in
+                            if !newValue {
+                                viewModel.closeSelectedTask()
+                            }
+                        }
+                    )
+                ) {
+                    EmptyView()
+                }
+            )
+        } else {
+            return AnyView(EmptyView())
+        }
     }
 }

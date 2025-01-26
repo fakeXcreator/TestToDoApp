@@ -12,17 +12,23 @@ import CoreData
 class TasksUploadingTests: XCTestCase {
     var taskListViewModel: TaskListViewModel!
     var apiViewModel: APIViewModel!
+    var persistenceController: PersistenceController!
+    var mockContext: NSManagedObjectContext!
     
     override func setUp() {
         super.setUp()
         apiViewModel = APIViewModel()
-        taskListViewModel = TaskListViewModel(apiViewModel: apiViewModel)
+        persistenceController = PersistenceController() // Инициализация PersistenceController
+        taskListViewModel = TaskListViewModel(apiViewModel: apiViewModel, persistenceController: persistenceController)
         
+        mockContext = persistenceController.container.viewContext
+
+        // Очистка Core Data перед тестами
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = TaskItem.fetchRequest()
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         
         do {
-            try PersistenceController.shared.container.viewContext.execute(deleteRequest)
+            try mockContext.execute(deleteRequest)
         } catch {
             XCTFail("Failed to clear Core Data")
         }
@@ -37,7 +43,8 @@ class TasksUploadingTests: XCTestCase {
         ]
 
         taskListViewModel.saveTasksToCoreData(from: apiTasks)
-
+        
+        // Wait for a short delay to ensure the tasks are saved
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             expectation.fulfill()
         }
@@ -48,7 +55,7 @@ class TasksUploadingTests: XCTestCase {
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "id", ascending: true)]
 
         do {
-            let tasks = try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
+            let tasks = try mockContext.fetch(fetchRequest)
             XCTAssertEqual(tasks.count, 2, "The number of tasks saved should be 2")
             XCTAssertEqual(tasks.first?.name, "API Task 1", "First task name should match API Task 1")
             XCTAssertEqual(tasks.last?.name, "API Task 2", "Last task name should match API Task 2")
@@ -56,5 +63,4 @@ class TasksUploadingTests: XCTestCase {
             XCTFail("Failed to fetch tasks after saving from API")
         }
     }
-
 }

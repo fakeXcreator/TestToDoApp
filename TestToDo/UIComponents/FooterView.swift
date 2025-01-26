@@ -11,10 +11,14 @@ struct FooterView: View {
     // MARK: - Properties
     @ObservedObject var taskListViewModel: TaskListViewModel
     @State private var isTaskSaved: Bool = false
+    private let persistenceController: PersistenceController // Добавляем свойство для persistenceController
     
-    init(taskListViewModel: TaskListViewModel) {
+    // Инициализатор, который принимает persistenceController
+    init(taskListViewModel: TaskListViewModel, persistenceController: PersistenceController) {
         self.taskListViewModel = taskListViewModel
+        self.persistenceController = persistenceController // Инициализируем persistenceController
     }
+
     // MARK: - Fetch Request
     @FetchRequest(
         entity: TaskItem.entity(),
@@ -32,7 +36,7 @@ struct FooterView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             
             NavigationLink(destination: NewTaskView(
-                viewModel: NewTaskViewModel(),
+                viewModel: NewTaskViewModel(persistenceController: persistenceController),
                 taskListViewModel: taskListViewModel,
                 isTaskSaved: $isTaskSaved
             )) {
@@ -47,8 +51,6 @@ struct FooterView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 49)
-        
         .background(Color("TestGray"))
     }
 }
-

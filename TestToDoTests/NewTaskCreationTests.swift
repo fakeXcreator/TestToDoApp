@@ -12,12 +12,20 @@ import CoreData
 class NewTaskCreationTests: XCTestCase {
     var newTaskViewModel: NewTaskViewModel!
     var mockContext: NSManagedObjectContext!
+    var persistenceController: PersistenceController!
+    var taskListViewModel: TaskListViewModel!
     
     override func setUp() {
         super.setUp()
-        mockContext = PersistenceController.shared.container.viewContext
-        newTaskViewModel = NewTaskViewModel()
         
+        // Создаем новый PersistenceController для тестов
+        persistenceController = PersistenceController(inMemory: true)
+        mockContext = persistenceController.container.viewContext
+        
+        newTaskViewModel = NewTaskViewModel(persistenceController: persistenceController)
+        taskListViewModel = TaskListViewModel(apiViewModel: APIViewModel(), persistenceController: persistenceController)
+        
+        // Очищаем mockContext перед каждым тестом
         let fetchRequest: NSFetchRequest<TaskItem> = TaskItem.fetchRequest()
         do {
             let tasks = try mockContext.fetch(fetchRequest)
@@ -31,14 +39,14 @@ class NewTaskCreationTests: XCTestCase {
     }
     
     func testSaveTask() {
+        // Устанавливаем данные для нового задания
         newTaskViewModel.title = "New Task"
         newTaskViewModel.description = "Task description"
         
-        print("Title: \(newTaskViewModel.title), Description: \(newTaskViewModel.description)")  
+        // Сохраняем задание, передавая нужную зависимость
+        newTaskViewModel.saveTask(to: taskListViewModel)
         
-        let viewModel = TaskListViewModel(apiViewModel: APIViewModel())
-        newTaskViewModel.saveTask(to: viewModel)
-        
+        // Проверяем, что задание было сохранено
         let fetchRequest: NSFetchRequest<TaskItem> = TaskItem.fetchRequest()
         do {
             let tasks = try mockContext.fetch(fetchRequest)
@@ -49,4 +57,3 @@ class NewTaskCreationTests: XCTestCase {
         }
     }
 }
-
