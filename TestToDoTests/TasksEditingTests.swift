@@ -16,13 +16,10 @@ class TaskEditingTests: XCTestCase {
     var apiViewModel: APIViewModel!
     
     override func setUpWithError() throws {
-        // Создаем контроллер для тестов с памятью
         persistenceController = PersistenceController(inMemory: true)
         
-        // Создаем mock APIViewModel
         apiViewModel = APIViewModel()
         
-        // Создаем TaskListViewModel
         taskListViewModel = TaskListViewModel(apiViewModel: apiViewModel, persistenceController: persistenceController)
     }
     
@@ -39,7 +36,6 @@ class TaskEditingTests: XCTestCase {
         newTask.desc = "Test Task Description"
         newTask.date = Date()
         
-        // Проверяем, что задача была добавлена в CoreData
         persistenceController.saveContext()
         
         let fetchedTasks = persistenceController.fetchTasks()
@@ -63,13 +59,11 @@ class TaskEditingTests: XCTestCase {
         let taskToEdit = fetchedTasks.first
         XCTAssertNotNil(taskToEdit, "Task should be fetched from CoreData")
         
-        // Изменяем данные задачи
         taskToEdit?.name = "Updated Task Name"
         taskToEdit?.desc = "Updated Task Description"
         
         persistenceController.saveContext()
         
-        // Проверяем, что задача была обновлена
         fetchedTasks = persistenceController.fetchTasks()
         let updatedTask = fetchedTasks.first
         XCTAssertEqual(updatedTask?.name, "Updated Task Name", "Task name should be updated")
@@ -93,7 +87,6 @@ class TaskEditingTests: XCTestCase {
     }
     
     func testEditTaskView() {
-        // Create a new task
         let newTask = TaskItem(context: persistenceController.container.viewContext)
         newTask.id = 1
         newTask.name = "Old Task"
@@ -102,15 +95,12 @@ class TaskEditingTests: XCTestCase {
         
         persistenceController.saveContext()
         
-        // Simulate editing the task
         let newTaskViewModel = NewTaskViewModel(task: newTask, persistenceController: persistenceController)
         newTaskViewModel.title = "Updated Task"
         newTaskViewModel.description = "Updated Description"
         
-        // Save the changes
         newTaskViewModel.saveTask(to: taskListViewModel)
         
-        // Fetch tasks and verify the update
         let fetchedTasks = persistenceController.fetchTasks()
         XCTAssertEqual(fetchedTasks.count, 1, "There should be one task after editing")
         

@@ -16,13 +16,10 @@ class TaskSearchingTests: XCTestCase {
     var apiViewModel: APIViewModel!
 
     override func setUpWithError() throws {
-        // Создаем контроллер для тестов с памятью
         persistenceController = PersistenceController(inMemory: true)
 
-        // Создаем mock APIViewModel
         apiViewModel = APIViewModel()
 
-        // Создаем TaskListViewModel
         taskListViewModel = TaskListViewModel(apiViewModel: apiViewModel, persistenceController: persistenceController)
     }
 
@@ -33,7 +30,6 @@ class TaskSearchingTests: XCTestCase {
     }
 
     func testSearchTasksNoMatch() {
-        // Добавляем задачи в CoreData
         let task1 = TaskItem(context: persistenceController.container.viewContext)
         task1.id = 1
         task1.name = "Buy milk"
@@ -48,18 +44,14 @@ class TaskSearchingTests: XCTestCase {
 
         persistenceController.saveContext()
 
-        // Убедимся, что задачи сохранены
         let fetchedTasks = persistenceController.fetchTasks()
         XCTAssertEqual(fetchedTasks.count, 2, "There should be two tasks saved in Core Data")
 
-        // Выполняем поиск по несуществующему слову "swim"
         taskListViewModel.searchText = "swim"
         taskListViewModel.filterTasks()
 
-        // Принудительно обновляем filteredTasks
         taskListViewModel.objectWillChange.send()
 
-        // Проверяем, что не найдено ни одной задачи
         XCTAssertEqual(taskListViewModel.filteredTasks.count, 0, "Filtered tasks count should be zero when there is no match")
     }
 }

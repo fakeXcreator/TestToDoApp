@@ -11,12 +11,11 @@ struct FooterView: View {
     // MARK: - Properties
     @ObservedObject var taskListViewModel: TaskListViewModel
     @State private var isTaskSaved: Bool = false
-    private let persistenceController: PersistenceController // Добавляем свойство для persistenceController
+    private let persistenceController: PersistenceController
     
-    // Инициализатор, который принимает persistenceController
     init(taskListViewModel: TaskListViewModel, persistenceController: PersistenceController) {
         self.taskListViewModel = taskListViewModel
-        self.persistenceController = persistenceController // Инициализируем persistenceController
+        self.persistenceController = persistenceController
     }
 
     // MARK: - Fetch Request

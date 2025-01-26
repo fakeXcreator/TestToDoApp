@@ -18,12 +18,11 @@ class TasksUploadingTests: XCTestCase {
     override func setUp() {
         super.setUp()
         apiViewModel = APIViewModel()
-        persistenceController = PersistenceController() // Инициализация PersistenceController
+        persistenceController = PersistenceController()
         taskListViewModel = TaskListViewModel(apiViewModel: apiViewModel, persistenceController: persistenceController)
         
         mockContext = persistenceController.container.viewContext
 
-        // Очистка Core Data перед тестами
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = TaskItem.fetchRequest()
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         
@@ -44,7 +43,6 @@ class TasksUploadingTests: XCTestCase {
 
         taskListViewModel.saveTasksToCoreData(from: apiTasks)
         
-        // Wait for a short delay to ensure the tasks are saved
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             expectation.fulfill()
         }
